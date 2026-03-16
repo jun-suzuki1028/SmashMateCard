@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div id="app">
+    <h1>スマメイト戦績ツイート</h1>
+
+    <div id="error" class="hidden">
+      <p id="error-message"></p>
+    </div>
+
+    <div id="loading">
+      <p>データを取得中...</p>
+    </div>
+
+    <div id="content" class="hidden">
+      <div id="stats-summary">
+        <div class="stat-row">
+          <span class="stat-label">今日の戦績</span>
+          <span id="today-record" class="stat-value"></span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">勝率</span>
+          <span id="today-winrate" class="stat-value"></span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">レート変動</span>
+          <span id="rate-change" class="stat-value"></span>
+        </div>
+      </div>
+
+      <canvas id="card-canvas" width="600" height="400"></canvas>
+
+      <div id="actions">
+        <button id="btn-copy" title="クリップボードにコピー">画像をコピー</button>
+        <button id="btn-download">画像をダウンロード</button>
+        <button id="btn-tweet">Xに投稿</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

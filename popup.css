@@ -1,0 +1,109 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  width: 420px;
+  font-family: "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
+  background: #1a1a2e;
+  color: #e0e0e0;
+  padding: 16px;
+}
+
+h1 {
+  font-size: 16px;
+  text-align: center;
+  margin-bottom: 12px;
+  color: #00d4ff;
+}
+
+.hidden {
+  display: none !important;
+}
+
+#loading {
+  text-align: center;
+  padding: 40px 0;
+  color: #888;
+}
+
+#error {
+  background: #3a1a1a;
+  border: 1px solid #ff4444;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+#error p {
+  color: #ff6666;
+  font-size: 13px;
+}
+
+#stats-summary {
+  background: #16213e;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+
+.stat-label {
+  color: #888;
+  font-size: 13px;
+}
+
+.stat-value {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+#card-canvas {
+  display: block;
+  width: 100%;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  border: 1px solid #333;
+}
+
+#actions {
+  display: flex;
+  gap: 8px;
+}
+
+#actions button {
+  flex: 1;
+  padding: 10px 8px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+#actions button:hover {
+  opacity: 0.85;
+}
+
+#btn-copy {
+  background: #444;
+  color: #fff;
+}
+
+#btn-download {
+  background: #00d4ff;
+  color: #000;
+}
+
+#btn-tweet {
+  background: #1da1f2;
+  color: #fff;
+}
