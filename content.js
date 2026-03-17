@@ -60,6 +60,20 @@
         }
       }
 
+      // テーブルで取得できなかった場合、bodyTextから正規表現で抽出
+      if (data.currentRate === null) {
+        const currentRateMatch = bodyText.match(/現在レート\s*(\d+)/);
+        if (currentRateMatch) data.currentRate = parseInt(currentRateMatch[1]);
+      }
+      if (data.maxRate === null) {
+        const maxRateMatch = bodyText.match(/最高レート\s*(\d+)/);
+        if (maxRateMatch) data.maxRate = parseInt(maxRateMatch[1]);
+      }
+      if (data.dailyChange === null) {
+        const dailyMatch = bodyText.match(/前日比[：:]\s*([+-]?\d+)/);
+        if (dailyMatch) data.dailyChange = parseInt(dailyMatch[1]);
+      }
+
       // 勝敗総数を抽出
       const winLossMatch = bodyText.match(/(\d+)\s*勝\s*(\d+)\s*敗/);
       if (winLossMatch) {
@@ -79,46 +93,27 @@
       const scripts = document.querySelectorAll("script");
       for (const script of scripts) {
         const text = script.textContent;
-        // dataPoints: [{x:1,y:1500}, ...] のパターンを探す
-        const dpMatch = text.match(/dataPoints\s*:\s*(\[[\s\S]*?\])\s*[,}]/);
-        if (dpMatch) {
-          try {
-            // JSON5風のオブジェクト表記をパース
-            const cleaned = dpMatch[1]
-              .replace(/(\w+)\s*:/g, '"$1":') // キー名をクォート
-              .replace(/'/g, '"')
-              .replace(/,\s*([}\]])/g, "$1"); // 末尾カンマ除去
-            data.dataPoints = JSON.parse(cleaned);
-          } catch (e) {
-            // evalフォールバック（安全な範囲で）
-            try {
-              const fn = new Function("return " + dpMatch[1]);
-              data.dataPoints = fn();
-            } catch (e2) {
-              data.error = "dataPointsのパースに失敗しました";
-            }
-          }
+
+        // dataPoints.push({x:1, y:1500}) パターンを検索
+        const pushMatches = text.matchAll(
+          /dataPoints\.push\(\{\s*x\s*:\s*(\d+)\s*,\s*y\s*:\s*(\d+)\s*\}\)/g,
+        );
+        for (const m of pushMatches) {
+          data.dataPoints.push({ x: parseInt(m[1]), y: parseInt(m[2]) });
         }
 
-        // data: [{x:1,y:1500}, ...] パターンも検索（Chart.jsの場合）
+        // 配列リテラル形式のフォールバック: dataPoints: [{x:1,y:1500}, ...]
         if (data.dataPoints.length === 0) {
-          const dataMatch = text.match(
-            /data\s*:\s*(\[\s*\{[\s\S]*?\}\s*\])\s*[,}]/,
-          );
-          if (dataMatch) {
+          const dpMatch = text.match(/dataPoints\s*:\s*(\[[\s\S]*?\])\s*[,}]/);
+          if (dpMatch) {
             try {
-              const cleaned = dataMatch[1]
+              const cleaned = dpMatch[1]
                 .replace(/(\w+)\s*:/g, '"$1":')
                 .replace(/'/g, '"')
                 .replace(/,\s*([}\]])/g, "$1");
               data.dataPoints = JSON.parse(cleaned);
             } catch (e) {
-              try {
-                const fn = new Function("return " + dataMatch[1]);
-                data.dataPoints = fn();
-              } catch (e2) {
-                // 無視
-              }
+              // 無視
             }
           }
         }

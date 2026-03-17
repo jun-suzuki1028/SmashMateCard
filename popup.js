@@ -229,7 +229,7 @@ function buildTweetText(stats) {
     `今日のスマメイト戦績`,
     `${stats.wins}勝 ${stats.losses}敗 (勝率${stats.winRate}%)`,
     `レート: ${stats.startRate} → ${stats.endRate} (${changeSign}${stats.dailyChange})`,
-    `#スマブラSP #スマメイト`,
+    `#スマブラSP #スマメイト #SmashMateCard`,
   ].join("\n");
 }
 

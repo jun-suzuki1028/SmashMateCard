@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "スマメイト戦績ツイート",
-  "description": "smashmate.netの1日の戦績を画像+テキストでX(Twitter)に投稿",
+  "name": "SmashMateCard",
+  "description": "smashmate.netの1日の戦績をカード画像にしてX(Twitter)に共有",
   "version": "1.0",
   "permissions": ["activeTab"],
   "content_scripts": [
