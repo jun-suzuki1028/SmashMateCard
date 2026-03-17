@@ -13,14 +13,18 @@
 
 ## インストール方法
 
-1. このリポジトリをダウンロードまたは `git clone`
-   ```
-   git clone https://github.com/jun-suzuki1028/smashmate-tweet.git
-   ```
-2. Chromeで `chrome://extensions` を開く
-3. 右上の「デベロッパーモード」をONにする
-4. 「パッケージ化されていない拡張機能を読み込む」をクリック
-5. ダウンロードしたフォルダを選択
+### 1. ダウンロード
+1. [こちらのページ](https://github.com/jun-suzuki1028/SmashMateCard) にアクセス
+2. 緑色の「Code」ボタンをクリック
+3. 「Download ZIP」をクリック
+4. ダウンロードしたZIPファイルを右クリック →「すべて展開」で解凍
+
+### 2. Chromeに追加
+1. Chromeのアドレスバーに `chrome://extensions` と入力してEnter
+2. 画面右上の「デベロッパーモード」をONにする
+3. 「パッケージ化されていない拡張機能を読み込む」ボタンをクリック
+4. 先ほど解凍したフォルダ（`SmashMateCard-main`）を選択して「フォルダーの選択」をクリック
+5. ツールバーにSmashMateCardのアイコンが表示されたら完了
 
 ## 使い方
 
