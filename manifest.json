@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "SmashMateCard",
   "description": "smashmate.netの1日の戦績をカード画像にしてX(Twitter)に共有",
-  "version": "1.0",
+  "version": "1.0.0",
   "permissions": ["activeTab"],
   "content_scripts": [
     {

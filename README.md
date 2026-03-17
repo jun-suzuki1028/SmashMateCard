@@ -1,5 +1,7 @@
 # SmashMateCard
 
+**Version: 1.0.0**
+
 スマメイト(smashmate.net)の1日のレーティング対戦戦績をカード画像にして、X(Twitter)に共有できるChrome拡張機能です。
 
 > **注意**: 本ツールはsmashmate.netの非公式ツールです。
