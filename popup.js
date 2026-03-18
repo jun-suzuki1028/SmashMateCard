@@ -1,3 +1,69 @@
+// テーマ定義
+const THEMES = {
+  dark: {
+    name: "Dark",
+    bg: ["#0f0c29", "#302b63", "#24243e"],
+    accent: "#00d4ff",
+    win: "#4CAF50",
+    lose: "#f44336",
+    text: "#fff",
+    textSub: "#ccc",
+    textMuted: "#aaa",
+    textDim: "#888",
+    textFaint: "#666",
+    footer: "#555",
+  },
+  ocean: {
+    name: "Ocean",
+    bg: ["#0a1628", "#1a3a5c", "#0f2744"],
+    accent: "#00e5a0",
+    win: "#4CAF50",
+    lose: "#f44336",
+    text: "#fff",
+    textSub: "#ccc",
+    textMuted: "#aaa",
+    textDim: "#888",
+    textFaint: "#666",
+    footer: "#555",
+  },
+  crimson: {
+    name: "Crimson",
+    bg: ["#1a0a0a", "#3d1c1c", "#2a1212"],
+    accent: "#ff8c42",
+    win: "#4CAF50",
+    lose: "#f44336",
+    text: "#fff",
+    textSub: "#ccc",
+    textMuted: "#aaa",
+    textDim: "#888",
+    textFaint: "#666",
+    footer: "#555",
+  },
+  light: {
+    name: "Light",
+    bg: ["#f5f5f5", "#e8e8ec", "#f0f0f4"],
+    accent: "#3b82f6",
+    win: "#16a34a",
+    lose: "#dc2626",
+    text: "#1a1a1a",
+    textSub: "#333",
+    textMuted: "#555",
+    textDim: "#777",
+    textFaint: "#999",
+    footer: "#aaa",
+  },
+};
+
+let currentTheme = "dark";
+
+// hex色をrgba文字列に変換
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 // 戦績計算ロジック
 function calculateTodayStats(data) {
   const { currentRate, dailyChange, dataPoints } = data;
@@ -8,25 +74,32 @@ function calculateTodayStats(data) {
 
   const startRate = currentRate - dailyChange;
 
-  // dataPointsを末尾から遡り、開始レートと一致する最後の地点を探す
+  // 末尾から最大100試合分を遡り、startRateと一致する最初の地点を採用
+  // 検索範囲を制限することで、過去の同一レートを誤って拾うことを防ぐ
+  const searchLimit = Math.max(0, dataPoints.length - 100);
   let todayStartIndex = -1;
-  for (let i = dataPoints.length - 1; i >= 0; i--) {
+  for (let i = dataPoints.length - 1; i >= searchLimit; i--) {
     if (dataPoints[i].y === startRate) {
       todayStartIndex = i;
+      // さらに手前に同じ値が連続していれば、その先頭まで遡る
+      // （試合開始前のレート安定区間を含める）
+      while (i - 1 >= searchLimit && dataPoints[i - 1].y === startRate) {
+        todayStartIndex = i - 1;
+        i--;
+      }
       break;
     }
   }
 
-  // 完全一致が見つからない場合、最も近い値を探す
+  // 完全一致が見つからない場合、検索範囲内でstartRateに最も近い値で代替
   if (todayStartIndex === -1) {
     let minDiff = Infinity;
-    for (let i = dataPoints.length - 1; i >= 0; i--) {
+    for (let i = dataPoints.length - 1; i >= searchLimit; i--) {
       const diff = Math.abs(dataPoints[i].y - startRate);
       if (diff < minDiff) {
         minDiff = diff;
         todayStartIndex = i;
       }
-      if (diff === 0) break;
     }
   }
 
@@ -68,7 +141,7 @@ function calculateTodayStats(data) {
 }
 
 // 戦績カード画像を生成
-function renderCard(canvas, data, stats) {
+function renderCard(canvas, data, stats, theme) {
   const ctx = canvas.getContext("2d");
   const W = 600;
   const H = 400;
@@ -77,14 +150,14 @@ function renderCard(canvas, data, stats) {
 
   // 背景グラデーション
   const bgGrad = ctx.createLinearGradient(0, 0, W, H);
-  bgGrad.addColorStop(0, "#0f0c29");
-  bgGrad.addColorStop(0.5, "#302b63");
-  bgGrad.addColorStop(1, "#24243e");
+  bgGrad.addColorStop(0, theme.bg[0]);
+  bgGrad.addColorStop(0.5, theme.bg[1]);
+  bgGrad.addColorStop(1, theme.bg[2]);
   ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, W, H);
 
   // 装飾ライン
-  ctx.strokeStyle = "rgba(0, 212, 255, 0.3)";
+  ctx.strokeStyle = hexToRgba(theme.accent, 0.3);
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(0, 60);
@@ -95,20 +168,20 @@ function renderCard(canvas, data, stats) {
   const today = new Date();
   const dateStr = `${today.getFullYear()}/${String(today.getMonth() + 1).padStart(2, "0")}/${String(today.getDate()).padStart(2, "0")}`;
 
-  ctx.fillStyle = "#888";
+  ctx.fillStyle = theme.textDim;
   ctx.font = "14px sans-serif";
   ctx.textAlign = "right";
   ctx.fillText(dateStr, W - 20, 35);
 
   // タイトル
-  ctx.fillStyle = "#00d4ff";
+  ctx.fillStyle = theme.accent;
   ctx.font = "bold 20px sans-serif";
   ctx.textAlign = "left";
   ctx.fillText("Today's Smashmate Results", 20, 40);
 
   // ユーザー名
   if (data.userName) {
-    ctx.fillStyle = "#ccc";
+    ctx.fillStyle = theme.textSub;
     ctx.font = "14px sans-serif";
     ctx.fillText(data.userName, 20, 90);
   }
@@ -118,48 +191,48 @@ function renderCard(canvas, data, stats) {
   ctx.textAlign = "center";
 
   // 勝ち数
-  ctx.fillStyle = "#4CAF50";
+  ctx.fillStyle = theme.win;
   ctx.font = "bold 56px sans-serif";
   ctx.fillText(String(stats.wins), W / 2 - 80, recordY);
-  ctx.fillStyle = "#aaa";
+  ctx.fillStyle = theme.textMuted;
   ctx.font = "20px sans-serif";
   ctx.fillText("WIN", W / 2 - 80, recordY + 28);
 
   // ハイフン
-  ctx.fillStyle = "#666";
+  ctx.fillStyle = theme.textFaint;
   ctx.font = "bold 40px sans-serif";
   ctx.fillText("-", W / 2, recordY - 8);
 
   // 負け数
-  ctx.fillStyle = "#f44336";
+  ctx.fillStyle = theme.lose;
   ctx.font = "bold 56px sans-serif";
   ctx.fillText(String(stats.losses), W / 2 + 80, recordY);
-  ctx.fillStyle = "#aaa";
+  ctx.fillStyle = theme.textMuted;
   ctx.font = "20px sans-serif";
   ctx.fillText("LOSE", W / 2 + 80, recordY + 28);
 
   // 勝率
-  ctx.fillStyle = "#fff";
+  ctx.fillStyle = theme.text;
   ctx.font = "bold 18px sans-serif";
   ctx.fillText(`勝率 ${stats.winRate}%`, W / 2, recordY + 60);
 
   // レート変動
   const rateY = 250;
   ctx.textAlign = "center";
-  ctx.fillStyle = "#ccc";
+  ctx.fillStyle = theme.textSub;
   ctx.font = "16px sans-serif";
   ctx.fillText("Rating", W / 2, rateY);
 
   const changeColor =
     stats.dailyChange > 0
-      ? "#4CAF50"
+      ? theme.win
       : stats.dailyChange < 0
-        ? "#f44336"
-        : "#888";
+        ? theme.lose
+        : theme.textDim;
   const changeSign = stats.dailyChange > 0 ? "+" : "";
 
   ctx.font = "bold 28px sans-serif";
-  ctx.fillStyle = "#fff";
+  ctx.fillStyle = theme.text;
   ctx.fillText(`${stats.startRate}  →  ${stats.endRate}`, W / 2, rateY + 35);
 
   ctx.fillStyle = changeColor;
@@ -178,7 +251,7 @@ function renderCard(canvas, data, stats) {
     const maxRate = Math.max(...rates);
     const range = maxRate - minRate || 1;
 
-    ctx.strokeStyle = "rgba(0, 212, 255, 0.6)";
+    ctx.strokeStyle = hexToRgba(theme.accent, 0.6);
     ctx.lineWidth = 2;
     ctx.beginPath();
 
@@ -202,13 +275,13 @@ function renderCard(canvas, data, stats) {
     ctx.closePath();
 
     const graphGrad = ctx.createLinearGradient(0, graphY, 0, graphY + graphH);
-    graphGrad.addColorStop(0, "rgba(0, 212, 255, 0.2)");
-    graphGrad.addColorStop(1, "rgba(0, 212, 255, 0)");
+    graphGrad.addColorStop(0, hexToRgba(theme.accent, 0.2));
+    graphGrad.addColorStop(1, hexToRgba(theme.accent, 0));
     ctx.fillStyle = graphGrad;
     ctx.fill();
 
     // レート数値ラベル
-    ctx.fillStyle = "#666";
+    ctx.fillStyle = theme.textFaint;
     ctx.font = "11px sans-serif";
     ctx.textAlign = "left";
     ctx.fillText(String(maxRate), graphX, graphY - 4);
@@ -216,7 +289,7 @@ function renderCard(canvas, data, stats) {
   }
 
   // フッター
-  ctx.fillStyle = "#555";
+  ctx.fillStyle = theme.footer;
   ctx.font = "11px sans-serif";
   ctx.textAlign = "right";
   ctx.fillText("smashmate.net", W - 20, H - 10);
@@ -233,10 +306,124 @@ function buildTweetText(stats) {
   ].join("\n");
 }
 
+// デモ用モックデータ
+function createDemoData() {
+  const points = [
+    { y: 1500 },
+    { y: 1520 },
+    { y: 1505 },
+    { y: 1535 },
+    { y: 1515 },
+    { y: 1550 },
+    { y: 1530 },
+    { y: 1565 },
+    { y: 1545 },
+    { y: 1570 },
+    { y: 1555 },
+    { y: 1580 },
+  ];
+  return {
+    data: {
+      userName: "DemoPlayer",
+      currentRate: 1580,
+      dailyChange: 80,
+      dataPoints: points,
+    },
+    stats: {
+      wins: 8,
+      losses: 3,
+      total: 11,
+      winRate: "72.7",
+      startRate: 1500,
+      endRate: 1580,
+      dailyChange: 80,
+      rateHistory: [],
+      todayPoints: points,
+    },
+  };
+}
+
+// カードUI初期化（本番・デモ共通）
+function initCardUI(data, stats) {
+  const loadingEl = document.getElementById("loading");
+  const contentEl = document.getElementById("content");
+  const errorEl = document.getElementById("error");
+
+  document.getElementById("today-record").textContent =
+    `${stats.wins}勝 ${stats.losses}敗`;
+  document.getElementById("today-winrate").textContent = `${stats.winRate}%`;
+
+  const changeSign = stats.dailyChange > 0 ? "+" : "";
+  const rateChangeEl = document.getElementById("rate-change");
+  rateChangeEl.textContent = `${stats.startRate} → ${stats.endRate} (${changeSign}${stats.dailyChange})`;
+  rateChangeEl.style.color =
+    stats.dailyChange > 0
+      ? "#4CAF50"
+      : stats.dailyChange < 0
+        ? "#f44336"
+        : "#888";
+
+  const canvas = document.getElementById("card-canvas");
+  renderCard(canvas, data, stats, THEMES[currentTheme]);
+
+  loadingEl.classList.add("hidden");
+  errorEl.classList.add("hidden");
+  contentEl.classList.remove("hidden");
+
+  // テーマ切替
+  document.querySelectorAll(".theme-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      currentTheme = btn.dataset.theme;
+      document
+        .querySelectorAll(".theme-btn")
+        .forEach((b) => b.classList.remove("selected"));
+      btn.classList.add("selected");
+      renderCard(canvas, data, stats, THEMES[currentTheme]);
+    });
+  });
+
+  // ボタンイベント
+  document.getElementById("btn-copy").addEventListener("click", () => {
+    canvas.toBlob((blob) => {
+      const item = new ClipboardItem({ "image/png": blob });
+      navigator.clipboard.write([item]).then(() => {
+        const btn = document.getElementById("btn-copy");
+        btn.textContent = "コピー完了!";
+        setTimeout(() => {
+          btn.textContent = "画像をコピー";
+        }, 2000);
+      });
+    });
+  });
+
+  document.getElementById("btn-download").addEventListener("click", () => {
+    const link = document.createElement("a");
+    link.download = `smashmate_${new Date().toISOString().slice(0, 10)}.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  });
+
+  document.getElementById("btn-copy-text").addEventListener("click", () => {
+    const text = buildTweetText(stats);
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById("btn-copy-text");
+      btn.textContent = "コピー完了!";
+      setTimeout(() => {
+        btn.textContent = "テキストをコピー";
+      }, 2000);
+    });
+  });
+
+  document.getElementById("btn-tweet").addEventListener("click", () => {
+    const text = buildTweetText(stats);
+    const url = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}`;
+    chrome.tabs.create({ url });
+  });
+}
+
 // メイン処理
 document.addEventListener("DOMContentLoaded", () => {
   const loadingEl = document.getElementById("loading");
-  const contentEl = document.getElementById("content");
   const errorEl = document.getElementById("error");
   const errorMsg = document.getElementById("error-message");
 
@@ -246,10 +433,11 @@ document.addEventListener("DOMContentLoaded", () => {
     errorMsg.textContent = msg;
   }
 
-  function showContent() {
-    loadingEl.classList.add("hidden");
-    contentEl.classList.remove("hidden");
-  }
+  // デモボタン
+  document.getElementById("btn-demo").addEventListener("click", () => {
+    const { data, stats } = createDemoData();
+    initCardUI(data, stats);
+  });
 
   // アクティブタブのContent Scriptにメッセージを送信
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -289,54 +477,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // UIを更新
-      document.getElementById("today-record").textContent =
-        `${stats.wins}勝 ${stats.losses}敗`;
-      document.getElementById("today-winrate").textContent =
-        `${stats.winRate}%`;
-
-      const changeSign = stats.dailyChange > 0 ? "+" : "";
-      const rateChangeEl = document.getElementById("rate-change");
-      rateChangeEl.textContent = `${stats.startRate} → ${stats.endRate} (${changeSign}${stats.dailyChange})`;
-      rateChangeEl.style.color =
-        stats.dailyChange > 0
-          ? "#4CAF50"
-          : stats.dailyChange < 0
-            ? "#f44336"
-            : "#888";
-
-      // カード描画
-      const canvas = document.getElementById("card-canvas");
-      renderCard(canvas, response, stats);
-
-      showContent();
-
-      // ボタンイベント
-      document.getElementById("btn-copy").addEventListener("click", () => {
-        canvas.toBlob((blob) => {
-          const item = new ClipboardItem({ "image/png": blob });
-          navigator.clipboard.write([item]).then(() => {
-            const btn = document.getElementById("btn-copy");
-            btn.textContent = "コピー完了!";
-            setTimeout(() => {
-              btn.textContent = "画像をコピー";
-            }, 2000);
-          });
-        });
-      });
-
-      document.getElementById("btn-download").addEventListener("click", () => {
-        const link = document.createElement("a");
-        link.download = `smashmate_${new Date().toISOString().slice(0, 10)}.png`;
-        link.href = canvas.toDataURL("image/png");
-        link.click();
-      });
-
-      document.getElementById("btn-tweet").addEventListener("click", () => {
-        const text = buildTweetText(stats);
-        const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
-        chrome.tabs.create({ url });
-      });
+      initCardUI(response, stats);
     });
   });
 });

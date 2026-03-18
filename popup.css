@@ -42,6 +42,23 @@ h1 {
   font-size: 13px;
 }
 
+#btn-demo {
+  display: block;
+  margin: 10px auto 0;
+  padding: 6px 16px;
+  background: #444;
+  color: #ccc;
+  border: 1px solid #666;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+#btn-demo:hover {
+  opacity: 0.85;
+}
+
 #stats-summary {
   background: #16213e;
   border-radius: 8px;
@@ -63,6 +80,31 @@ h1 {
 .stat-value {
   font-size: 14px;
   font-weight: bold;
+}
+
+#theme-selector {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.theme-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.theme-btn:hover {
+  transform: scale(1.15);
+}
+
+.theme-btn.selected {
+  border-color: #fff;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
 }
 
 #card-canvas {
@@ -95,6 +137,11 @@ h1 {
 
 #btn-copy {
   background: #444;
+  color: #fff;
+}
+
+#btn-copy-text {
+  background: #555;
   color: #fff;
 }
 

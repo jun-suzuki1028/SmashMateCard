@@ -1,2 +1,18 @@
 store/
 .playwright-mcp/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+
+# Package archives
+*.zip
+*.crx
+
+# Node (将来使う場合)
+node_modules/

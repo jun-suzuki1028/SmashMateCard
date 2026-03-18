@@ -10,6 +10,7 @@
 
     <div id="error" class="hidden">
       <p id="error-message"></p>
+      <button id="btn-demo">デモで表示</button>
     </div>
 
     <div id="loading">
@@ -32,11 +33,19 @@
         </div>
       </div>
 
+      <div id="theme-selector">
+        <button class="theme-btn selected" data-theme="dark" style="background: #00d4ff;" title="Dark"></button>
+        <button class="theme-btn" data-theme="ocean" style="background: #00e5a0;" title="Ocean"></button>
+        <button class="theme-btn" data-theme="crimson" style="background: #ff8c42;" title="Crimson"></button>
+        <button class="theme-btn" data-theme="light" style="background: #fff;" title="Light"></button>
+      </div>
+
       <canvas id="card-canvas" width="600" height="400"></canvas>
 
       <div id="actions">
         <button id="btn-copy" title="クリップボードにコピー">画像をコピー</button>
         <button id="btn-download">画像をダウンロード</button>
+        <button id="btn-copy-text" title="戦績テキストをコピー">テキストをコピー</button>
         <button id="btn-tweet">Xに投稿</button>
       </div>
     </div>
