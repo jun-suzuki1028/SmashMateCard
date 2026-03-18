@@ -125,7 +125,7 @@ function calculateTodayStats(data) {
   }
 
   const total = wins + losses;
-  const winRate = total > 0 ? ((wins / total) * 100).toFixed(1) : 0;
+  const winRate = total > 0 ? ((wins / total) * 100).toFixed(1) : "0.0";
 
   return {
     wins,
@@ -344,7 +344,15 @@ function createDemoData() {
 }
 
 // カードUI初期化（本番・デモ共通）
+// 現在のデータ/statsを保持（イベントリスナーから参照）
+let activeData = null;
+let activeStats = null;
+let listenersAttached = false;
+
 function initCardUI(data, stats) {
+  activeData = data;
+  activeStats = stats;
+
   const loadingEl = document.getElementById("loading");
   const contentEl = document.getElementById("content");
   const errorEl = document.getElementById("error");
@@ -370,6 +378,10 @@ function initCardUI(data, stats) {
   errorEl.classList.add("hidden");
   contentEl.classList.remove("hidden");
 
+  // イベントリスナーは一度だけ登録（activeData/activeStatsを参照するので再登録不要）
+  if (listenersAttached) return;
+  listenersAttached = true;
+
   // テーマ切替
   document.querySelectorAll(".theme-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -378,7 +390,7 @@ function initCardUI(data, stats) {
         .querySelectorAll(".theme-btn")
         .forEach((b) => b.classList.remove("selected"));
       btn.classList.add("selected");
-      renderCard(canvas, data, stats, THEMES[currentTheme]);
+      renderCard(canvas, activeData, activeStats, THEMES[currentTheme]);
     });
   });
 
@@ -404,7 +416,7 @@ function initCardUI(data, stats) {
   });
 
   document.getElementById("btn-copy-text").addEventListener("click", () => {
-    const text = buildTweetText(stats);
+    const text = buildTweetText(activeStats);
     navigator.clipboard.writeText(text).then(() => {
       const btn = document.getElementById("btn-copy-text");
       btn.textContent = "コピー完了!";
@@ -415,7 +427,7 @@ function initCardUI(data, stats) {
   });
 
   document.getElementById("btn-tweet").addEventListener("click", () => {
-    const text = buildTweetText(stats);
+    const text = buildTweetText(activeStats);
     const url = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}`;
     chrome.tabs.create({ url });
   });
@@ -460,7 +472,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      if (response.error && response.dailyChange === null) {
+      if (response.error) {
         showError(response.error);
         return;
       }
