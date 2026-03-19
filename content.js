@@ -24,12 +24,6 @@
       // ページ全体のテキストから情報を抽出
       const bodyText = document.body.innerText;
 
-      // 現在レート: "レート" の近くにある数値
-      const rateSection = document.querySelectorAll(
-        "table.user-info td, .rating-value, .user-info span",
-      );
-      const allText = document.body.innerHTML;
-
       // テーブルからレート情報を抽出
       const tables = document.querySelectorAll("table");
       for (const table of tables) {
