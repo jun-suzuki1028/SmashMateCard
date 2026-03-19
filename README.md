@@ -8,7 +8,7 @@
 
 ## スクリーンショット
 
-![戦績カードの例](store/screenshot_smashmate_page.png)
+![戦績カードの例](images/screenshot.png)
 
 ## 機能
 
