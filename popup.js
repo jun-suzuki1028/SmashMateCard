@@ -2,9 +2,6 @@
 (function () {
   "use strict";
 
-  // 1日の最大試合数（検索範囲制限用）
-  const MAX_DAILY_MATCHES = 100;
-
   // テーマ定義
   const THEMES = {
     dark: {
@@ -71,82 +68,6 @@
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 
-  // 戦績計算ロジック
-  function calculateTodayStats(data) {
-    const { currentRate, dailyChange, dataPoints } = data;
-
-    if (dailyChange === null) {
-      return { error: "今日の対戦データがありません" };
-    }
-
-    const startRate = currentRate - dailyChange;
-
-    // 末尾から最大100試合分を遡り、startRateと一致する最初の地点を採用
-    // 検索範囲を制限することで、過去の同一レートを誤って拾うことを防ぐ
-    const searchLimit = Math.max(0, dataPoints.length - MAX_DAILY_MATCHES);
-    let todayStartIndex = -1;
-    for (let i = dataPoints.length - 1; i >= searchLimit; i--) {
-      if (dataPoints[i].y === startRate) {
-        todayStartIndex = i;
-        // さらに手前に同じ値が連続していれば、その先頭まで遡る
-        // （試合開始前のレート安定区間を含める）
-        while (i - 1 >= searchLimit && dataPoints[i - 1].y === startRate) {
-          todayStartIndex = i - 1;
-          i--;
-        }
-        break;
-      }
-    }
-
-    // 完全一致が見つからない場合、検索範囲内でstartRateに最も近い値で代替
-    if (todayStartIndex === -1) {
-      let minDiff = Infinity;
-      for (let i = dataPoints.length - 1; i >= searchLimit; i--) {
-        const diff = Math.abs(dataPoints[i].y - startRate);
-        if (diff < minDiff) {
-          minDiff = diff;
-          todayStartIndex = i;
-        }
-      }
-    }
-
-    // 今日の試合データを抽出
-    const todayPoints = dataPoints.slice(todayStartIndex);
-
-    let wins = 0;
-    let losses = 0;
-    const rateHistory = [];
-
-    for (let i = 1; i < todayPoints.length; i++) {
-      const diff = todayPoints[i].y - todayPoints[i - 1].y;
-      if (diff > 0) {
-        wins++;
-      } else if (diff < 0) {
-        losses++;
-      }
-      rateHistory.push({
-        from: todayPoints[i - 1].y,
-        to: todayPoints[i].y,
-        diff: diff,
-      });
-    }
-
-    const total = wins + losses;
-    const winRate = total > 0 ? ((wins / total) * 100).toFixed(1) : "0.0";
-
-    return {
-      wins,
-      losses,
-      total,
-      winRate,
-      startRate,
-      endRate: currentRate,
-      dailyChange,
-      rateHistory,
-      todayPoints,
-    };
-  }
-
   // 戦績カード画像を生成
   function renderCard(canvas, data, stats, theme) {
     const ctx = canvas.getContext("2d");
@@ -172,8 +93,7 @@
     ctx.stroke();
 
     // 日付
-    const today = new Date();
-    const dateStr = `${today.getFullYear()}/${String(today.getMonth() + 1).padStart(2, "0")}/${String(today.getDate()).padStart(2, "0")}`;
+    const dateStr = stats.dateKey.replaceAll("-", "/");
 
     ctx.fillStyle = theme.textDim;
     ctx.font = "14px sans-serif";
@@ -184,7 +104,7 @@
     ctx.fillStyle = theme.accent;
     ctx.font = "bold 20px sans-serif";
     ctx.textAlign = "left";
-    ctx.fillText("Today's Smashmate Results", 20, 40);
+    ctx.fillText("Smashmate Session Results", 20, 40);
 
     // ユーザー名
     if (data.userName) {
@@ -301,14 +221,16 @@
     ctx.fillStyle = theme.footer;
     ctx.font = "11px sans-serif";
     ctx.textAlign = "right";
-    ctx.fillText("smashmate.net", W - 20, H - 10);
+    const basis = stats.baselineId === "0" ? "シーズン最初から" : `No.${stats.baselineId} の次から`;
+    ctx.fillText(`計測開始以降 / ${basis}`, W - 20, H - 10);
   }
 
   // ツイートテキスト生成
   function buildTweetText(stats) {
     const changeSign = stats.dailyChange > 0 ? "+" : "";
     return [
-      `今日のスマメイト戦績`,
+      `スマメイト戦績（計測開始以降）`,
+      `${stats.dateKey}（日本時間） / ${stats.baselineId === "0" ? "シーズン最初から" : `No.${stats.baselineId}の次から`}`,
       `${stats.wins}勝 ${stats.losses}敗 (勝率${stats.winRate}%)`,
       `レート: ${stats.startRate} → ${stats.endRate} (${changeSign}${stats.dailyChange})`,
       `#スマブラSP #スマメイト #SmashMateCard`,
@@ -339,10 +261,12 @@
         dataPoints: points,
       },
       stats: {
-        wins: 8,
-        losses: 3,
+        wins: 6,
+        losses: 5,
         total: 11,
-        winRate: "72.7",
+        winRate: "54.5",
+        dateKey: SmashMateTracking.japanDate(),
+        baselineId: "0",
         startRate: 1500,
         endRate: 1580,
         dailyChange: 80,
@@ -438,8 +362,7 @@
 
     document.getElementById("btn-download").addEventListener("click", () => {
       const link = document.createElement("a");
-      const d = new Date();
-      const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const dateStr = activeStats.dateKey;
       link.download = `smashmate_${dateStr}.png`;
       link.href = canvas.toDataURL("image/png");
       link.click();
@@ -468,64 +391,104 @@
     });
   }
 
-  // メイン処理
-  document.addEventListener("DOMContentLoaded", () => {
+  // 計測設定は、取得エラー時にも修正できるようカードとは分離する。
+  document.addEventListener("DOMContentLoaded", async () => {
     const loadingEl = document.getElementById("loading");
+    const contentEl = document.getElementById("content");
     const errorEl = document.getElementById("error");
     const errorMsg = document.getElementById("error-message");
+    const controls = document.getElementById("tracking-controls");
+    const status = document.getElementById("tracking-status");
+    const input = document.getElementById("baseline-id");
+    const demo = document.getElementById("btn-demo");
+    let tabId = null;
+    let busy = false;
 
-    function showError(msg) {
+    function showError(message) {
       loadingEl.classList.add("hidden");
+      contentEl.classList.add("hidden");
       errorEl.classList.remove("hidden");
-      errorMsg.textContent = msg;
+      errorMsg.textContent = message;
     }
 
-    // デモボタン
-    document.getElementById("btn-demo").addEventListener("click", () => {
+    function setBusy(value) {
+      busy = value;
+      controls.querySelectorAll("button, input").forEach((el) => { el.disabled = value; });
+      demo.disabled = value;
+      controls.setAttribute("aria-busy", String(value));
+    }
+
+    async function refresh(options = {}) {
+      if (busy || tabId === null) return;
+      setBusy(true);
+      loadingEl.classList.remove("hidden");
+      contentEl.classList.add("hidden");
+      errorEl.classList.add("hidden");
+      status.textContent = "";
+      try {
+        const result = await new Promise((resolve, reject) => {
+          chrome.tabs.sendMessage(tabId, { action: "trackStats", ...options }, (response) => {
+            if (chrome.runtime.lastError) {
+              reject(new Error("データを取得できませんでした。拡張機能を更新した場合は、スマメイトのページを再読み込みしてください。"));
+            } else if (!response) {
+              reject(new Error("データを取得できませんでした。もう一度更新してください。"));
+            } else if (response.error) {
+              reject(new Error(response.error));
+            } else {
+              resolve(response);
+            }
+          });
+        });
+        const { data, stats, baseline, created } = result;
+        document.getElementById("tracking-period").textContent =
+          `第${baseline.seasonId}期 / ${stats.dateKey}（日本時間）`;
+        document.getElementById("tracking-baseline").textContent = stats.baselineId === "0"
+          ? "基準：シーズン最初から集計"
+          : `基準：No.${stats.baselineId} の次から集計`;
+        input.value = stats.baselineId;
+        status.textContent = created
+          ? "基準を保存しました。この後に終了した対戦を集計します。"
+          : Object.hasOwn(options, "baselineId")
+            ? "基準IDを変更して再集計しました。"
+            : "最新の履歴で集計しました。";
+        initCardUI(data, stats);
+      } catch (error) {
+        showError(error.message);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    demo.addEventListener("click", () => {
       const { data, stats } = createDemoData();
+      status.textContent = "デモを表示中です。保存済みの基準は変更していません。";
       initCardUI(data, stats);
     });
+    document.getElementById("baseline-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      void refresh({ baselineId: input.value });
+    });
+    document.getElementById("btn-refresh").addEventListener("click", () => { void refresh(); });
+    document.getElementById("btn-reset").addEventListener("click", () => { void refresh({ reset: true }); });
 
-    // アクティブタブのContent Scriptにメッセージを送信
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    try {
+      const tabs = await new Promise((resolve, reject) => {
+        chrome.tabs.query({ active: true, currentWindow: true }, (found) => {
+          if (chrome.runtime.lastError) reject(new Error("タブを取得できませんでした。"));
+          else resolve(found);
+        });
+      });
       const tab = tabs[0];
-      if (!tab || !tab.url || !tab.url.includes("smashmate.net/user/")) {
+      const url = tab?.url ? new URL(tab.url) : null;
+      if (!url || url.origin !== "https://smashmate.net" || !/^\/user\/\d+\/$/.test(url.pathname)) {
         showError("smashmate.netのユーザーページを開いてください。");
         return;
       }
-
-      chrome.tabs.sendMessage(tab.id, { action: "extractData" }, (response) => {
-        if (chrome.runtime.lastError) {
-          showError(
-            "データの取得に失敗しました。ページをリロードしてもう一度お試しください。",
-          );
-          return;
-        }
-
-        if (!response) {
-          showError("データを取得できませんでした。");
-          return;
-        }
-
-        if (response.error) {
-          showError(response.error);
-          return;
-        }
-
-        if (response.dailyChange === 0) {
-          showError("今日の対戦がまだありません（前日比: 0）。");
-          return;
-        }
-
-        const stats = calculateTodayStats(response);
-
-        if (stats.error) {
-          showError(stats.error);
-          return;
-        }
-
-        initCardUI(response, stats);
-      });
-    });
+      tabId = tab.id;
+      controls.classList.remove("hidden");
+      await refresh();
+    } catch (error) {
+      showError(error.message);
+    }
   });
 })();
