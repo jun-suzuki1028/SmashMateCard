@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <title>SmashMateCard</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
@@ -17,10 +18,28 @@
       <p>データを取得中...</p>
     </div>
 
+    <section id="tracking-controls" class="hidden" aria-label="計測の設定">
+      <p id="tracking-period"></p>
+      <p id="tracking-baseline">計測の基準を確認しています。</p>
+      <form id="baseline-form">
+        <label for="baseline-id">この対戦IDの次から集計</label>
+        <div class="baseline-input-row">
+          <input id="baseline-id" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="例：012345" required aria-describedby="baseline-help">
+          <button id="btn-baseline" type="submit">IDを変更</button>
+        </div>
+      </form>
+      <p id="baseline-help">0 はシーズン最初から（過去の日も含む）。入力した対戦自体は含みません。</p>
+      <div class="tracking-actions">
+        <button id="btn-refresh" type="button">更新</button>
+        <button id="btn-reset" type="button">現在から計測し直す</button>
+      </div>
+      <p id="tracking-status" role="status" aria-live="polite"></p>
+    </section>
+
     <div id="content" class="hidden">
       <div id="stats-summary">
         <div class="stat-row">
-          <span class="stat-label">今日の戦績</span>
+          <span class="stat-label">計測開始以降の戦績</span>
           <span id="today-record" class="stat-value"></span>
         </div>
         <div class="stat-row">
@@ -51,6 +70,7 @@
     </div>
   </div>
 
+  <script src="tracking.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

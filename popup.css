@@ -59,6 +59,45 @@ h1 {
   opacity: 0.85;
 }
 
+#tracking-controls {
+  background: #16213e;
+  border: 1px solid #34415d;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+#tracking-period, #baseline-help { color: #b0b8c8; }
+#tracking-baseline { font-weight: bold; margin-bottom: 10px; }
+#baseline-form label { display: block; margin-bottom: 4px; }
+.baseline-input-row, .tracking-actions { display: flex; gap: 8px; margin-bottom: 8px; }
+#baseline-id {
+  min-width: 0;
+  flex: 1;
+  background: #10192d;
+  color: #fff;
+  border: 1px solid #62728c;
+  border-radius: 5px;
+  padding: 8px;
+  font: inherit;
+}
+#tracking-controls button {
+  background: #34415d;
+  color: #fff;
+  border: 1px solid #62728c;
+  border-radius: 5px;
+  padding: 8px 10px;
+  font: inherit;
+  cursor: pointer;
+}
+#btn-baseline { white-space: nowrap; }
+.tracking-actions { margin-top: 10px; }
+#tracking-status { color: #8ae2e8; }
+button:disabled, input:disabled { cursor: wait !important; opacity: 0.5; }
+button:focus-visible, input:focus-visible { outline: 2px solid #00d4ff; outline-offset: 2px; }
+
 #stats-summary {
   background: #16213e;
   border-radius: 8px;

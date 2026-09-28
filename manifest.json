@@ -1,14 +1,14 @@
 {
   "manifest_version": 3,
   "name": "SmashMateCard",
-  "description": "smashmate.netの1日の戦績をカード画像にしてX(Twitter)に共有",
+  "description": "smashmate.netの計測開始以降の戦績を対戦IDで集計し、カード画像にして共有",
   "version": "1.2.0",
   "homepage_url": "https://github.com/jun-suzuki1028/SmashMateCard",
-  "permissions": ["activeTab"],
+  "permissions": ["activeTab", "storage"],
   "content_scripts": [
     {
       "matches": ["https://smashmate.net/user/*"],
-      "js": ["content.js"]
+      "js": ["tracking.js", "content.js"]
     }
   ],
   "action": {
